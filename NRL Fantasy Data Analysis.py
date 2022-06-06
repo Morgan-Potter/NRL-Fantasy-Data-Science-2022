@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 import requests
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,11 +43,21 @@ for player in PLAYER_STATS:
 #     proj_score_dict[FULL_STATS[a]['first_name'] + ' ' + FULL_STATS[a]['last_name']] = FULL_STATS[a]['proj_prices']['14'] - FULL_STATS[a]['stats']['prices']['13']
 #     proj_score.append((FULL_STATS[a]['first_name'] + ' ' + FULL_STATS[a]['last_name'], FULL_STATS[a]['proj_prices']['14'] - FULL_STATS[a]['stats']['prices']['13']))
 
-def get_increasing_players(stat, threshold):
+def get_increasing_players(stat, threshold, round_start=0, round_fin=0):
     """Returns a list of all player IDs with an increasing stat over a given round frame."""
     increasing_players = []
+    use_first = False
+    use_last = False
+    if round_start == 0:
+        use_first = True
+    if round_fin == 0:
+        use_last = True
     for id in ID_STATS.keys():
-        round_start, round_fin = get_first_last_round(id)
+        start, fin = get_first_last_round(id)
+        if use_first:
+            round_start = start
+        if use_last:
+            round_fin = fin
         start_stat = get_player_round_stat(id, round_start, stat)
         fin_stat = get_player_round_stat(id, round_fin, stat)
         if start_stat != np.nan and fin_stat != np.nan and fin_stat - start_stat > threshold:
@@ -74,7 +85,7 @@ def get_list_player_stats(list, stat):
     return list_stats
 
 def get_xy(player_stats_dict):
-    """Takes a dict with players and their correlating round stats, and converts them to x and y coordinates."""
+    """Takes a dict with players and their correlating round stats, and converts them to lists of x and y coordinates with a legend."""
     x = []
     y = []
     i = 0
@@ -90,22 +101,49 @@ def get_xy(player_stats_dict):
     return x, y, legend
 
 def get_first_last_round(id):
+    """Returns the first and last round a given player has played, returns 0, 0 if they have not played a round."""
     if len(list(ID_STATS[id]["stats"]["scores"])) > 0:
         return int(list(ID_STATS[id]["stats"]["scores"])[-1]), int(list(ID_STATS[id]["stats"]["scores"])[0])
     else:
         return 0, 0
 def plot_xy(data, ax):
+    """Plots tuple with lists of x,y and legend on a given axis."""
     for i in range(len(data[0])):
         ax.plot(data[0][i], data[1][i], label=PLAYER_NAME[data[2][i]])
+def get_dict_stat_average(stats, round_start, round_fin):
+    """Returns the average scores per round of a dict of players."""
+    stat_average = dict()
+    average = dict()
+    for round in range(round_start, round_fin):
+        round_sum = 0
+        i=0
+        for id in stats.keys():
+            i += 1
+            if round in stats[id]:
+                if str(stats[id][round]) != str(np.nan):
+                    round_sum += stats[id][round]
+        stat_average[round] = round_sum / i
+    average["AVERAGE"] = stat_average
+    return average
+        
 def main():
-    fig, axes = plt.subplots(2, 1)
-    players = get_increasing_players("prices", 200000)
-    ppt_data = get_xy(get_list_player_stats(players, "prices"))
-    plot_xy(ppt_data, axes[0])
-    plot_xy(get_xy(get_list_player_stats(players, "avg_scores")), axes[1])
-
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='center right')
+    fig, ax = plt.subplots()
+    players = get_increasing_players("prices", -200000)
+    print(players)
+    # players = [ID_NAME["Siosifa Talakai"], ID_NAME["Nathan Cleary"]]
+    price_data = get_list_player_stats(players, "prices")
+    average = get_xy(get_dict_stat_average(price_data, 1, 13))
+    print(average)
+    # players = get_xy(get_list_player_stats([ID_NAME[Siosifa Talakai]]))
+    # plot_xy(get_xy(ppt_data), axes)
+    # print(get_xy(average))
+    ax.plot(average[0][0], average[1][0], label="Average Price", ls='dotted', marker='o', markersize=12)
+    ax2 = ax.twinx()
+    average2 = get_xy(get_dict_stat_average(get_list_player_stats(players, "avg_scores"), 1, 13))
+    ax2.plot(average2[0][0], average2[1][0], label="Average Score Average")
+    # plot_xy(get_xy(get_list_player_stats(players, "ppt")), ax2)
+    # plot_xy(get_xy(get_list_player_stats(players, "ppt")), axes[2])
+    # fig.legend(loc='center right')
     plt.show()
 
 main()
