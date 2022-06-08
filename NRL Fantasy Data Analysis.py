@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # # Get data set from fantasy website
 # PLAYER_STATS = json.loads(requests.get("https://fantasy.nrl.com/data/nrl/players.json").text)
-PLAYER_STATS = json.loads(open("players.json").read()) # Uses downloaded dataset from Fantasy Stats Centre Website.
+PLAYER_STATS = json.loads(open("players.json").read()) # Uses pre-downloaded dataset from Fantasy Stats Centre Website.
 PLAYER_NAME = dict()
 ID_STATS = dict()
 for player in PLAYER_STATS: # Loops over dictionaries with player stats.
@@ -166,7 +166,7 @@ def round_3_6_avg():
     fig.legend(loc='upper right')
     fig.suptitle('Average of Players With Spike of 100000$ Between Rounds 3 and 6')
     plt.show()
-    
+
 def round_3_9_player():
     """This is the third example in the report, it plots a specific player with a spike in rounds 3-9."""
     # Get needed variables
